@@ -5,6 +5,10 @@ VisualStudioVersion = 17.14.36203.30 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameHubSearch", "GameHubSearch\GameHubSearch.csproj", "{86B598B3-F28B-4CE2-95CB-4E6C607D34E4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BLL", "BLL\BLL.csproj", "{C5A5C13E-57FB-4AF2-B601-0BD23E9203A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAL", "DAL\DAL.csproj", "{D3F668E9-E968-4B0B-A451-C9B8BAF6CCBB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{86B598B3-F28B-4CE2-95CB-4E6C607D34E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86B598B3-F28B-4CE2-95CB-4E6C607D34E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86B598B3-F28B-4CE2-95CB-4E6C607D34E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5A5C13E-57FB-4AF2-B601-0BD23E9203A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5A5C13E-57FB-4AF2-B601-0BD23E9203A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5A5C13E-57FB-4AF2-B601-0BD23E9203A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5A5C13E-57FB-4AF2-B601-0BD23E9203A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3F668E9-E968-4B0B-A451-C9B8BAF6CCBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3F668E9-E968-4B0B-A451-C9B8BAF6CCBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3F668E9-E968-4B0B-A451-C9B8BAF6CCBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3F668E9-E968-4B0B-A451-C9B8BAF6CCBB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
