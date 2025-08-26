@@ -1,0 +1,16 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build output
+bin/
+obj/
+Debug/
+Release/
+
+# Tools/IDE khác
+.vscode/
+.idea/
