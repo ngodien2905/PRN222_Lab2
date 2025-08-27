@@ -54,5 +54,25 @@ namespace DAL.Repo
                 _context.SaveChanges();
             }
         }
+
+        public List<Game> SearchGames(string term)
+        {
+            term = term?.Trim() ?? string.Empty;
+            var q = _context.Games
+                .Include(g => g.Category)
+                .Include(g => g.Developer)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(term))
+            {
+                var t = term.ToLower();
+                q = q.Where(g =>
+                    g.Title.ToLower().Contains(t) ||
+                    (g.Category != null && g.Category.CategoryName.ToLower().Contains(t)) ||
+                    (g.Developer != null && g.Developer.DeveloperName.ToLower().Contains(t)));
+            }
+
+            return q.OrderBy(g => g.Title).ToList();
+        }
     }
 }

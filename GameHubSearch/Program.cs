@@ -4,6 +4,7 @@ using DAL.Data;
 using DAL.Interfaces;
 using DAL.Models;
 using DAL.Repo;
+using GameHubSearch.Pages.Shared.GameHub;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,5 +65,7 @@ app.MapGet("/", context =>
     context.Response.Redirect("/Shared/Login");
     return Task.CompletedTask;
 });
+
+app.MapHub<GameHub>("GameHub");
 
 app.Run();

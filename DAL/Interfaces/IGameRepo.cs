@@ -18,5 +18,7 @@ namespace DAL.Interfaces
         void DeleteGame(int gameId);
 
         List<Game> GetAllGames();
+
+        List<Game> SearchGames(string term);
     }
 }

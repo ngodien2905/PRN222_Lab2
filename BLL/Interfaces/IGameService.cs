@@ -15,5 +15,7 @@ namespace BLL.Interfaces
         void UpdateGame(Game game);
         void DeleteGame(int gameId);
         List<Game> GetAllGames();
+
+        List<Game> SearchGames(string term);
     }
 }

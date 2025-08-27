@@ -37,5 +37,10 @@ namespace BLL.Services
         {
             return _gameRepo.GetAllGames();
         }
+
+        public List<Game> SearchGames(string term)
+        {
+            return _gameRepo.SearchGames(term);
+        }
     }
 }

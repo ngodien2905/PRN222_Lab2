@@ -7,16 +7,17 @@
 
 <h1>Games</h1>
 
-<p>
-    <a asp-page="Create">Create New</a>
-</p>
-
-<div class="mb-3 d-flex justify-content-end">
+<div class="mb-3 d-flex justify-content-between">
     <form method="post" asp-page="/Shared/Logout" class="d-inline">
         <button type="submit" class="btn btn-danger">Logout</button>
     </form>
+
+    <input id="searchBox" class="form-control w-50" placeholder="Search title / category / developer..." />
 </div>
 
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
 
 <table class="table">
     <thead>
@@ -26,7 +27,6 @@
             <th>Release Date</th>
             <th>Category</th>
             <th>Developer</th>
-            <th class="text-center">Registered Players</th>
             <th></th>
         </tr>
     </thead>
@@ -39,7 +39,6 @@
                 <td class="release">@item.ReleaseDate</td>
                 <td class="category">@item.Category</td>
                 <td class="developer">@item.Developer</td>
-                <td class="text-center registered">@item.RegisteredCount</td>
                 <td>
                     <a asp-page="./Edit" asp-route-id="@item.GameId">Edit</a> |
                     <a asp-page="./Details" asp-route-id="@item.GameId">Details</a> |
@@ -51,34 +50,66 @@
 </table>
 
 @section Scripts {
+    <!-- SignalR from unpkg -->
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script>
-        const hubUrl = "/Shared/Hubs/GameHub";
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl(hubUrl)
+            .withUrl("/GameHub")
             .withAutomaticReconnect()
             .build();
 
+        // Row deletion
         connection.on("GameDeleted", function (id) {
             const row = document.querySelector(`[data-game-id="${id}"]`);
             if (row) row.remove();
         });
 
+        // Row update
         connection.on("GameUpdated", function (game) {
             const row = document.querySelector(`[data-game-id="${game.id}"]`);
             if (!row) return;
-
             row.querySelector(".title").textContent = game.title ?? "";
             row.querySelector(".price").textContent = game.price ?? "";
             row.querySelector(".release").textContent = game.releaseDate ?? "";
-            if (row.querySelector(".category") && 'category' in game) {
+            if (row.querySelector(".category") && 'category' in game)
                 row.querySelector(".category").textContent = game.category ?? "";
-            }
-            if (row.querySelector(".developer") && 'developer' in game) {
+            if (row.querySelector(".developer") && 'developer' in game)
                 row.querySelector(".developer").textContent = game.developer ?? "";
+        });
+
+        // Search results rendering
+        connection.on("SearchResults", function (rows) {
+            const tbody = document.getElementById("games-body");
+            tbody.innerHTML = "";
+            for (const g of rows) {
+                const tr = document.createElement("tr");
+                tr.setAttribute("data-game-id", g.id);
+                tr.innerHTML = `
+                    <td class="title">${g.title ?? ""}</td>
+                    <td class="price">${g.price ?? ""}</td>
+                    <td class="release">${g.releaseDate ?? ""}</td>
+                    <td class="category">${g.category ?? ""}</td>
+                    <td class="developer">${g.developer ?? ""}</td>
+                    <td>
+                        <a href="./Edit?id=${g.id}">Edit</a> |
+                        <a href="./Details?id=${g.id}">Details</a> |
+                        <a href="./Delete?id=${g.id}">Delete</a>
+                    </td>`;
+                tbody.appendChild(tr);
             }
         });
 
-        connection.start().catch(console.error);
+        // Debounced search input
+        let timer;
+        document.getElementById("searchBox").addEventListener("input", e => {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                connection.invoke("SearchGames", e.target.value).catch(console.error);
+            }, 300);
+        });
+
+        connection.start()
+            .then(() => connection.invoke("SearchGames", "")) // initial load
+            .catch(console.error);
     </script>
 }
