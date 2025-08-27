@@ -2,59 +2,83 @@
 @model GameHubSearch.Pages.Shared.GamePage.IndexModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Games";
 }
 
-<h1>Index</h1>
+<h1>Games</h1>
 
 <p>
     <a asp-page="Create">Create New</a>
 </p>
+
+<div class="mb-3 d-flex justify-content-end">
+    <form method="post" asp-page="/Shared/Logout" class="d-inline">
+        <button type="submit" class="btn btn-danger">Logout</button>
+    </form>
+</div>
+
+
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Game[0].Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Game[0].Price)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Game[0].ReleaseDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Game[0].Category)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Game[0].Developer)
-            </th>
+            <th>Title</th>
+            <th>Price</th>
+            <th>Release Date</th>
+            <th>Category</th>
+            <th>Developer</th>
+            <th class="text-center">Registered Players</th>
             <th></th>
         </tr>
     </thead>
-    <tbody>
-@foreach (var item in Model.Game) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Price)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ReleaseDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Category.CategoryName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Developer.DeveloperName)
-            </td>
-            <td>
-                <a asp-page="./Edit" asp-route-id="@item.GameId">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.GameId">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.GameId">Delete</a>
-            </td>
-        </tr>
-}
+    <tbody id="games-body">
+        @foreach (var item in Model.Games)
+        {
+            <tr data-game-id="@item.GameId">
+                <td class="title">@item.Title</td>
+                <td class="price">@item.Price.ToString("0.00")</td>
+                <td class="release">@item.ReleaseDate</td>
+                <td class="category">@item.Category</td>
+                <td class="developer">@item.Developer</td>
+                <td class="text-center registered">@item.RegisteredCount</td>
+                <td>
+                    <a asp-page="./Edit" asp-route-id="@item.GameId">Edit</a> |
+                    <a asp-page="./Details" asp-route-id="@item.GameId">Details</a> |
+                    <a asp-page="./Delete" asp-route-id="@item.GameId">Delete</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        const hubUrl = "/Shared/Hubs/GameHub";
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(hubUrl)
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("GameDeleted", function (id) {
+            const row = document.querySelector(`[data-game-id="${id}"]`);
+            if (row) row.remove();
+        });
+
+        connection.on("GameUpdated", function (game) {
+            const row = document.querySelector(`[data-game-id="${game.id}"]`);
+            if (!row) return;
+
+            row.querySelector(".title").textContent = game.title ?? "";
+            row.querySelector(".price").textContent = game.price ?? "";
+            row.querySelector(".release").textContent = game.releaseDate ?? "";
+            if (row.querySelector(".category") && 'category' in game) {
+                row.querySelector(".category").textContent = game.category ?? "";
+            }
+            if (row.querySelector(".developer") && 'developer' in game) {
+                row.querySelector(".developer").textContent = game.developer ?? "";
+            }
+        });
+
+        connection.start().catch(console.error);
+    </script>
+}

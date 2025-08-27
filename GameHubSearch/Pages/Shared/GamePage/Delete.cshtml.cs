@@ -1,62 +1,51 @@
-﻿using System;
+﻿using BLL.Interfaces;
+using DAL.Data;
+using DAL.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using DAL.Data;
-using DAL.Models;
+using Microsoft.AspNetCore.SignalR;
 
 namespace GameHubSearch.Pages.Shared.GamePage
 {
     public class DeleteModel : PageModel
     {
-        private readonly DAL.Data.GameHubContext _context;
+        private readonly IGameService _gameService;
+        private readonly IHubContext<GameHubSearch.Pages.Shared.GameHub.GameHub> _hubContext;
 
-        public DeleteModel(DAL.Data.GameHubContext context)
+        public DeleteModel(IGameService gameService, IHubContext<GameHubSearch.Pages.Shared.GameHub.GameHub> hubContext)
         {
-            _context = context;
+            _gameService = gameService;
+            _hubContext = hubContext;
         }
 
         [BindProperty]
         public Game Game { get; set; } = default!;
 
-        public async Task<IActionResult> OnGetAsync(int? id)
+        public IActionResult OnGet(int id)
         {
-            if (id == null)
+            Game = _gameService.GetGameById(id);
+            if (Game == null)
             {
                 return NotFound();
-            }
-
-            var game = await _context.Games.FirstOrDefaultAsync(m => m.GameId == id);
-
-            if (game == null)
-            {
-                return NotFound();
-            }
-            else
-            {
-                Game = game;
             }
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(int? id)
+        public async Task<IActionResult> OnPostAsync(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var game = await _context.Games.FindAsync(id);
+            var game = _gameService.GetGameById(id);
             if (game != null)
             {
-                Game = game;
-                _context.Games.Remove(Game);
-                await _context.SaveChangesAsync();
+                _gameService.DeleteGame(id);
+                // Broadcast the deletion to all SignalR clients
+                await _hubContext.Clients.All.SendAsync("GameDeleted", id);
             }
-
             return RedirectToPage("./Index");
         }
     }

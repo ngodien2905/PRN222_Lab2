@@ -1,41 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using BLL.Interfaces;
+using DAL.Data;
+using DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using DAL.Data;
-using DAL.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GameHubSearch.Pages.Shared.GamePage
 {
     public class DetailsModel : PageModel
     {
-        private readonly DAL.Data.GameHubContext _context;
+        private readonly IGameService _gameService;
 
-        public DetailsModel(DAL.Data.GameHubContext context)
+        public DetailsModel(IGameService gameService)
         {
-            _context = context;
+            _gameService = gameService;
         }
 
         public Game Game { get; set; } = default!;
 
-        public async Task<IActionResult> OnGetAsync(int? id)
+        public IActionResult OnGet(int id)
         {
-            if (id == null)
+            Game = _gameService.GetGameById(id);
+            if (Game == null)
             {
                 return NotFound();
-            }
-
-            var game = await _context.Games.FirstOrDefaultAsync(m => m.GameId == id);
-            if (game == null)
-            {
-                return NotFound();
-            }
-            else
-            {
-                Game = game;
             }
             return Page();
         }

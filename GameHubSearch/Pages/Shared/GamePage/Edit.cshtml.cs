@@ -1,79 +1,97 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using BLL.Interfaces;
+using DAL.Data;
+using DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using DAL.Data;
-using DAL.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GameHubSearch.Pages.Shared.GamePage
 {
     public class EditModel : PageModel
     {
-        private readonly DAL.Data.GameHubContext _context;
 
-        public EditModel(DAL.Data.GameHubContext context)
+        private readonly IGameService _gameService;
+        private readonly IHubContext<GameHubSearch.Pages.Shared.GameHub.GameHub> _hub;
+        private readonly GameHubContext _ctx;
+        private readonly IValidationService _validationService;
+
+        public EditModel(IGameService gameService, IHubContext<GameHubSearch.Pages.Shared.GameHub.GameHub> hub, GameHubContext ctx, IValidationService validationService)
         {
-            _context = context;
+            _gameService = gameService;
+            _hub = hub;
+            _ctx = ctx;
+            _validationService = validationService;
         }
 
         [BindProperty]
         public Game Game { get; set; } = default!;
 
-        public async Task<IActionResult> OnGetAsync(int? id)
+        private async Task PopulateLookupsAsync(int? selectedDevId = null, int? selectedCatId = null)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            ViewData["DeveloperId"] = new SelectList(
+                await _ctx.Developers.AsNoTracking().ToListAsync(),
+                "DeveloperId", "DeveloperName", selectedDevId
+            );
 
-            var game =  await _context.Games.FirstOrDefaultAsync(m => m.GameId == id);
-            if (game == null)
-            {
-                return NotFound();
-            }
-            Game = game;
-           ViewData["CategoryId"] = new SelectList(_context.GameCategories, "CategoryId", "CategoryName");
-           ViewData["DeveloperId"] = new SelectList(_context.Developers, "DeveloperId", "DeveloperName");
+            ViewData["CategoryId"] = new SelectList(
+                await _ctx.GameCategories.AsNoTracking().ToListAsync(),
+                "CategoryId", "CategoryName", selectedCatId
+            );
+        }
+
+        public async Task<IActionResult> OnGetAsync(int id)
+        {
+            Game = _gameService.GetGameById(id);
+            if (Game == null) return NotFound();
+
+            await PopulateLookupsAsync(Game.DeveloperId, Game.CategoryId);
             return Page();
         }
 
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {
+                await PopulateLookupsAsync(Game?.DeveloperId, Game?.CategoryId);
                 return Page();
             }
 
-            _context.Attach(Game).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                _validationService.ValidateDate(Game);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!GameExists(Game.GameId))
+                ModelState.AddModelError("Game.ReleaseDate", ex.Message);
+                await PopulateLookupsAsync(Game.DeveloperId, Game.CategoryId);
+                return Page();
+            }
+            _gameService.UpdateGame(Game);
+
+
+            var updated = _gameService.GetGameById(Game.GameId);
+            if (updated != null)
+            {
+                var payload = new
                 {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                    id = updated.GameId,
+                    title = updated.Title,
+                    price = updated.Price.ToString("0.00"),
+                    releaseDate = updated.ReleaseDate.HasValue ? updated.ReleaseDate.Value.ToString("yyyy-MM-dd") : null,
+                    category = updated.Category?.CategoryName,
+                    developer = updated.Developer?.DeveloperName
+                };
+
+                await _hub.Clients.All.SendAsync("GameUpdated", payload);
             }
 
             return RedirectToPage("./Index");
-        }
-
-        private bool GameExists(int id)
-        {
-            return _context.Games.Any(e => e.GameId == id);
         }
     }
 }

@@ -7,40 +7,67 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using DAL.Data;
 using DAL.Models;
+using BLL.Interfaces;
 
 namespace GameHubSearch.Pages.Shared.GamePage
 {
     public class CreateModel : PageModel
     {
-        private readonly DAL.Data.GameHubContext _context;
+        private readonly IGameService _gameService;
+        private readonly IGameCategoryService _categoryService;
+        private readonly IDeveloperService _developerService;
+        private readonly IValidationService _validationService;
 
-        public CreateModel(DAL.Data.GameHubContext context)
+        public CreateModel(
+            IGameService gameService,
+            IGameCategoryService categoryService,
+            IDeveloperService developerService,
+            IValidationService validationService)
         {
-            _context = context;
-        }
-
-        public IActionResult OnGet()
-        {
-        ViewData["CategoryId"] = new SelectList(_context.GameCategories, "CategoryId", "CategoryName");
-        ViewData["DeveloperId"] = new SelectList(_context.Developers, "DeveloperId", "DeveloperName");
-            return Page();
+            _gameService = gameService;
+            _categoryService = categoryService;
+            _developerService = developerService;
+            _validationService = validationService;
         }
 
         [BindProperty]
         public Game Game { get; set; } = default!;
 
-        // For more information, see https://aka.ms/RazorPagesCRUD.
-        public async Task<IActionResult> OnPostAsync()
+        public void OnGet()
+        {
+            PopulateLookups();
+        }
+
+        public IActionResult OnPost()
         {
             if (!ModelState.IsValid)
             {
+                PopulateLookups();
                 return Page();
             }
 
-            _context.Games.Add(Game);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _validationService.ValidateDate(Game);   // enforce: not in the future
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("Game.ReleaseDate", ex.Message);
+                PopulateLookups();
+                return Page();
+            }
 
+            _gameService.AddGame(Game);
             return RedirectToPage("./Index");
+        }
+
+        private void PopulateLookups()
+        {
+            var categories = _categoryService.GetAllCategories();
+            ViewData["CategoryId"] = new SelectList(categories, "CategoryId", "CategoryName", Game?.CategoryId);
+
+            var developers = _developerService.GetAllDevelopers();
+            ViewData["DeveloperId"] = new SelectList(developers, "DeveloperId", "DeveloperName", Game?.DeveloperId);
         }
     }
 }

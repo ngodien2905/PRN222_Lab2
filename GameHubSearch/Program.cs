@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
+
 builder.Services.AddDbContext<GameHubContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
@@ -24,9 +25,18 @@ builder.Services.AddSession(options =>
             );
 
 builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IGameRepo, GameRepo>();
+builder.Services.AddScoped<IDeveloperRepo, DeveloperRepo>();
+builder.Services.AddScoped<IGameCategoryRepo, GameCategoryRepo>();
+
+
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<IValidationService, ValidationService>();
+builder.Services.AddScoped<IGameCategoryService, GameCategoryService>();
+builder.Services.AddScoped<IDeveloperService, DeveloperService>();  
+builder.Services.AddScoped<IGameService, GameService>();
 
 var app = builder.Build();
 
